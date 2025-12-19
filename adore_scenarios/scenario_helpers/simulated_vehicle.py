@@ -61,24 +61,34 @@ def _build_composable_components(
     debug: bool,
     controller: int,
 ) -> List[ComposableNode]:
-    """Create composable components for the simulated vehicle stack."""
-    return [
-        ComposableNode(
-            package="simulated_vehicle",
-            plugin="adore::simulated_vehicle::SimulatedVehicleNode",
-            name="simulated_vehicle",
-            namespace=namespace,
-            parameters=with_topic_params(
-                {"set_start_position_x": x},
-                {"set_start_position_y": y},
-                {"set_start_psi": psi},
-                {"controllable": controllable},
-                {"vehicle_id": vehicle_id},
-                {"v2x_id": v2x_id},
-                {"vehicle_model_file": model_file},
-                topic_params=topic_params,
-            ),
+    """Create composable components for the simulated vehicle stack.
+
+    If controllable is False, only the simulated vehicle component is created.
+    """
+    components: List[ComposableNode] = []
+
+    simulated_vehicle_node = ComposableNode(
+        package="simulated_vehicle",
+        plugin="adore::simulated_vehicle::SimulatedVehicleNode",
+        name="simulated_vehicle",
+        namespace=namespace,
+        parameters=with_topic_params(
+            {"set_start_position_x": x},
+            {"set_start_position_y": y},
+            {"set_start_psi": psi},
+            {"controllable": controllable},
+            {"vehicle_id": vehicle_id},
+            {"v2x_id": v2x_id},
+            {"vehicle_model_file": model_file},
+            topic_params=topic_params,
         ),
+    )
+    components.append(simulated_vehicle_node)
+
+    if not controllable:
+        return components
+
+    components.append(
         ComposableNode(
             package="mission_control",
             plugin="adore::MissionControlNode",
@@ -92,7 +102,10 @@ def _build_composable_components(
                 {"request_assistance_polygon": request_assistance_polygon},
                 topic_params=topic_params,
             ),
-        ),
+        )
+    )
+
+    components.append(
         ComposableNode(
             package="decision_maker",
             plugin="adore::DecisionMaker",
@@ -106,7 +119,10 @@ def _build_composable_components(
                 {"v2x_id": v2x_id},
                 topic_params=topic_params,
             ),
-        ),
+        )
+    )
+
+    components.append(
         ComposableNode(
             package="trajectory_tracker",
             plugin="adore::TrajectoryTrackerNode",
@@ -116,13 +132,18 @@ def _build_composable_components(
                 {"set_controller": controller},
                 {"controller_settings_keys": list(
                     simulation_pid_params.keys())},
-                {"controller_settings_values": list(
-                    simulation_pid_params.values())},
+                {
+                    "controller_settings_values": list(
+                        simulation_pid_params.values()
+                    )
+                },
                 {"vehicle_model_file": model_file},
                 topic_params=topic_params,
             ),
-        ),
-    ]
+        )
+    )
+
+    return components
 
 
 def _build_standalone_nodes(
@@ -144,24 +165,34 @@ def _build_standalone_nodes(
     debug: bool,
     controller: int,
 ) -> List[Action]:
-    """Create standalone ROS 2 nodes for the simulated vehicle stack."""
-    return [
-        Node(
-            package="simulated_vehicle",
-            executable="simulated_vehicle",
-            name="simulated_vehicle",
-            namespace=namespace,
-            parameters=with_topic_params(
-                {"set_start_position_x": x},
-                {"set_start_position_y": y},
-                {"set_start_psi": psi},
-                {"controllable": controllable},
-                {"vehicle_id": vehicle_id},
-                {"v2x_id": v2x_id},
-                {"vehicle_model_file": model_file},
-                topic_params=topic_params,
-            ),
+    """Create standalone ROS 2 nodes for the simulated vehicle stack.
+
+    If controllable is False, only the simulated vehicle node is created.
+    """
+    nodes: List[Action] = []
+
+    simulated_vehicle_node = Node(
+        package="simulated_vehicle",
+        executable="simulated_vehicle",
+        name="simulated_vehicle",
+        namespace=namespace,
+        parameters=with_topic_params(
+            {"set_start_position_x": x},
+            {"set_start_position_y": y},
+            {"set_start_psi": psi},
+            {"controllable": controllable},
+            {"vehicle_id": vehicle_id},
+            {"v2x_id": v2x_id},
+            {"vehicle_model_file": model_file},
+            topic_params=topic_params,
         ),
+    )
+    nodes.append(simulated_vehicle_node)
+
+    if not controllable:
+        return nodes
+
+    nodes.append(
         Node(
             package="mission_control",
             executable="mission_control",
@@ -175,7 +206,10 @@ def _build_standalone_nodes(
                 {"request_assistance_polygon": request_assistance_polygon},
                 topic_params=topic_params,
             ),
-        ),
+        )
+    )
+
+    nodes.append(
         Node(
             package="decision_maker",
             executable="decision_maker",
@@ -189,7 +223,10 @@ def _build_standalone_nodes(
                 {"v2x_id": v2x_id},
                 topic_params=topic_params,
             ),
-        ),
+        )
+    )
+
+    nodes.append(
         Node(
             package="trajectory_tracker",
             executable="trajectory_tracker",
@@ -199,13 +236,18 @@ def _build_standalone_nodes(
                 {"set_controller": controller},
                 {"controller_settings_keys": list(
                     simulation_pid_params.keys())},
-                {"controller_settings_values": list(
-                    simulation_pid_params.values())},
+                {
+                    "controller_settings_values": list(
+                        simulation_pid_params.values()
+                    )
+                },
                 {"vehicle_model_file": model_file},
                 topic_params=topic_params,
             ),
-        ),
-    ]
+        )
+    )
+
+    return nodes
 
 
 def create_simulated_vehicle_nodes(
@@ -227,6 +269,7 @@ def create_simulated_vehicle_nodes(
     """Create simulated vehicle nodes or components for ROS 2 launch.
 
     Returns a list of launch Actions (either a container or individual Nodes).
+    If controllable is False, only the simulated vehicle node/component is created.
     """
     x, y, psi = start_pose
     goal_x, goal_y = goal_position
@@ -235,7 +278,9 @@ def create_simulated_vehicle_nodes(
         request_assistance_polygon = [0.0, 0.0]
 
     topic_params = (
-        SIMULATED_V2X_TOPIC_PARAMETERS if simulated_v2x_mode else STANDARD_TOPIC_PARAMETERS
+        SIMULATED_V2X_TOPIC_PARAMETERS
+        if simulated_v2x_mode
+        else STANDARD_TOPIC_PARAMETERS
     )
 
     if composable:
@@ -256,7 +301,6 @@ def create_simulated_vehicle_nodes(
             topic_params=topic_params,
             debug=debug,
             controller=controller,
-
         )
 
         container = ComposableNodeContainer(
@@ -287,5 +331,4 @@ def create_simulated_vehicle_nodes(
         topic_params=topic_params,
         debug=debug,
         controller=controller,
-
     )

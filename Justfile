@@ -159,7 +159,7 @@ api_status:
 # Build the entire workspace locally (host colcon)
 build:
     cd "$COLCON_WS_ROOT" && {{source_ros}} && \
-    {{colcon_cmd}}
+    {{colcon_cmd}} && {{source_ros}}
 
 # Run colcon tests locally (host), skipping vendor + ros-carla-msgs
 test_ws:
@@ -179,32 +179,38 @@ force_kill_ros2:
 # Build adore_scenarios packages only (host colcon)
 build_scenarios:
     cd "$COLCON_WS_ROOT" && {{source_ros}} && \
-    {{colcon_cmd}} --packages-select `colcon list --base-paths src/adore_scenarios --names-only`
+    {{colcon_cmd}} --packages-select `colcon list --base-paths src/adore_scenarios --names-only` \
+    && {{source_ros}}
 
 # Build conversions packages only (host colcon)
 build_conversions:
     cd "$COLCON_WS_ROOT" && {{source_ros}} && \
-    {{colcon_cmd}} --packages-select `colcon list --base-paths src/conversions --names-only`
+    {{colcon_cmd}} --packages-select `colcon list --base-paths src/conversions --names-only` \
+    && {{source_ros}}
 
 # Build library packages only (host colcon)
 build_libraries:
     cd "$COLCON_WS_ROOT" && {{source_ros}} && \
-    {{colcon_cmd}} --packages-select `colcon list --base-paths src/libraries --names-only`
+    {{colcon_cmd}} --packages-select `colcon list --base-paths src/libraries --names-only` \
+    && {{source_ros}}
 
 # Build node packages only (host colcon)
 build_nodes:
     cd "$COLCON_WS_ROOT" && {{source_ros}} && \
-    {{colcon_cmd}} --packages-select `colcon list --base-paths src/nodes --names-only`
+    {{colcon_cmd}} --packages-select `colcon list --base-paths src/nodes --names-only` \
+    && {{source_ros}}
 
 # Build ros2_messages packages only (host colcon)
 build_messages:
     cd "$COLCON_WS_ROOT" && {{source_ros}} && \
-    {{colcon_cmd}} --packages-select `colcon list --base-paths src/ros2_messages --names-only`
+    {{colcon_cmd}} --packages-select `colcon list --base-paths src/ros2_messages --names-only` \
+    && {{source_ros}}
 
 # Build vendor packages only (host colcon)
 build_vendor:
     cd "$COLCON_WS_ROOT" && {{source_ros}} && \
-    {{colcon_cmd}} --packages-select `colcon list --base-paths src/vendor --names-only`
+    {{colcon_cmd}} --packages-select `colcon list --base-paths src/vendor --names-only` \
+    && {{source_ros}}
 
 # -------------------------------------------------------------------
 # Documentation (mkdocs in documentation/)
